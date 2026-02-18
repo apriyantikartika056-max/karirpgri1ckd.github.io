@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Portal BK - SMP PGRI 1 Cikadu</title>
+    
+    <!-- 1. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- 3. Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- 4. Libraries (PDF & Excel) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- 5. FIREBASE SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Konfigurasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhxGQeMHrU8OlMEyZB95kyIe0RNGOt0sw",
+            authDomain: "portal-bk-cikadu.firebaseapp.com",
+            projectId: "portal-bk-cikadu",
+            storageBucket: "portal-bk-cikadu.firebasestorage.app",
+            messagingSenderId: "322583877918",
+            appId: "1:322583877918:web:0c3774b12806e62afc510f"
+        };
+
+        const isConfigured = firebaseConfig.apiKey !== "ISI_API_KEY_ANDA_DISINI";
+
+        if (isConfigured) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
+                
+                window.db = db;
+                window.auth = auth;
+                window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+                window.signOut = signOut;
+                window.onAuthStateChanged = onAuthStateChanged;
+                window.collection = collection;
+                window.addDoc = addDoc;
+                window.setDoc = setDoc; 
+                window.getDoc = getDoc;
+                window.getDocs = getDocs;
+                window.updateDoc = updateDoc;
+                window.deleteDoc = deleteDoc;
+                window.doc = doc;
+                window.query = query;
+                window.orderBy = orderBy;
+                window.serverTimestamp = serverTimestamp;
+                window.isFirebaseReady = true;
+            } catch (e) {
+                console.error("Firebase init error:", e);
+                window.isFirebaseReady = false;
+            }
+        } else {
+            console.warn("Firebase belum dikonfigurasi.");
+            window.isFirebaseReady = false;
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+
+        .animate-float { animation: float 4s ease-in-out infinite; }
+        .animate-slide-left { animation: slideInLeft 0.8s ease-out forwards; }
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
+        .animate-blob { animation: blob 7s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @media print { body { -webkit-print-color-adjust: exact; } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-700">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const APP_LOGO_SRC = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgwUu16kZaIOWwXrIjSBuZr46H66LrA-oWBMstnKpMPXcifHFhvaLlyvRriI1O8md57hUDNndYIPTMn2DDIqfaqOa6qzU9iuDQRdvrAFjLO9sOiw0kQfHvqxY5Te3q-JmBxNrq8_CfgPyySREcDZrY-ZKO-J_YiX5R34cWak80BE5wwZoz3GEX71QpxWdnT/w100-h98/1.%20Logo%20SMP%20PGRI%20O.png"; 
+        const HERO_IMAGE_SRC = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgwUu16kZaIOWwXrIjSBuZr46H66LrA-oWBMstnKpMPXcifHFhvaLlyvRriI1O8md57hUDNndYIPTMn2DDIqfaqOa6qzU9iuDQRdvrAFjLO9sOiw0kQfHvqxY5Te3q-JmBxNrq8_CfgPyySREcDZrY-ZKO-J_YiX5R34cWak80BE5wwZoz3GEX71QpxWdnT/100-h98/1.%20Logo%20SMP%20PGRI%20O.png"; 
+        const GURU_FOTO_SRC = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg8x2flq6rtfim8XP5WdtedyZEBYXpQk9jRta8SJIWyEfWYr4FcHG4sxOUuw7vIXnkzwz1_TsllabOAI1YACnQA3d28986wFxBOR7mf_Qts7yOlA0xTJMZLrIhmvK1QapG4AWvr0UtQpeIzZlB_c8WrpMAS19oxDcQcwqG36-E31WBHqKwzhlSbr6GL4DO7/w89-h119/WhatsApp%20Image%202021-06-08%20at%2008.24.30.jpeg";
+
+        // Default Config
+        const DEFAULT_CONFIG = {
+            logoUrl: APP_LOGO_SRC,
+            heroUrl: HERO_IMAGE_SRC,
+            guruUrl: GURU_FOTO_SRC,
+            guruName: "Apriyanti Kartika",
+            guruNip: "......................."
+        };
+
+        const IconBase = ({ children, className = "", size = 24, fill = "none", stroke = "currentColor" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+        );
+
+        const Icons = {
+            BookOpen: (p) => <IconBase {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconBase>,
+            User: (p) => <IconBase {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>,
+            Briefcase: (p) => <IconBase {...p}><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></IconBase>,
+            GraduationCap: (p) => <IconBase {...p}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></IconBase>,
+            CheckSquare: (p) => <IconBase {...p}><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></IconBase>,
+            Info: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></IconBase>,
+            Menu: (p) => <IconBase {...p}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></IconBase>,
+            X: (p) => <IconBase {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>,
+            ChevronRight: (p) => <IconBase {...p}><path d="m9 18 6-6-6-6"/></IconBase>,
+            ArrowLeft: (p) => <IconBase {...p}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></IconBase>, 
+            Star: (p) => <IconBase {...p}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></IconBase>,
+            Target: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></IconBase>,
+            Heart: (p) => <IconBase {...p}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></IconBase>,
+            Activity: (p) => <IconBase {...p}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></IconBase>,
+            BarChart2: (p) => <IconBase {...p}><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></IconBase>,
+            Edit3: (p) => <IconBase {...p}><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></IconBase>,
+            CheckCircle: (p) => <IconBase {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></IconBase>,
+            ArrowRight: (p) => <IconBase {...p}><path d="M5 12h14m-7-7 7 7-7 7"/></IconBase>,
+            LayoutDashboard: (p) => <IconBase {...p}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></IconBase>,
+            Compass: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></IconBase>,
+            Lightbulb: (p) => <IconBase {...p}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></IconBase>,
+            School: (p) => <IconBase {...p}><path d="m4 6 8-4 8 4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M14 22v-4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4"/><path d="M18 5v17"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></IconBase>,
+            Smile: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></IconBase>,
+            Zap: (p) => <IconBase {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>,
+            Coffee: (p) => <IconBase {...p}><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="1" y2="4"/><line x1="10" x2="10" y1="1" y2="4"/><line x1="14" x2="14" y1="1" y2="4"/></IconBase>,
+            RefreshCw: (p) => <IconBase {...p}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconBase>,
+            Award: (p) => <IconBase {...p}><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></IconBase>,
+            List: (p) => <IconBase {...p}><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></IconBase>,
+            Download: (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></IconBase>,
+            Printer: (p) => <IconBase {...p}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></IconBase>,
+            PenTool: (p) => <IconBase {...p}><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/></IconBase>,
+            MessageSquare: (p) => <IconBase {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></IconBase>,
+            ArrowRightCircle: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="m12 16 4-4-4-4"/></IconBase>,
+            UserCheck: (p) => <IconBase {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></IconBase>,
+            Quote: (p) => <IconBase {...p}><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1zM15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/></IconBase>,
+            Phone: (p) => <IconBase {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></IconBase>,
+            Mail: (p) => <IconBase {...p}><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></IconBase>,
+            MapPin: (p) => <IconBase {...p}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></IconBase>,
+            ScaleIcon: (p) => <IconBase {...p}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></IconBase>,
+            HandIcon: (p) => <IconBase {...p}><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></IconBase>,
+            Lock: (p) => <IconBase {...p}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>,
+            Trash2: (p) => <IconBase {...p}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></IconBase>,
+            Plus: (p) => <IconBase {...p}><path d="M5 12h14"/><path d="M12 5v14"/></IconBase>,
+            AlertTriangle: (p) => <IconBase {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></IconBase>,
+            Clock: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>,
+            Upload: (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></IconBase>,
+            Save: (p) => <IconBase {...p}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></IconBase>
+        };
+
+        const { 
+            BookOpen, User, Briefcase, GraduationCap, CheckSquare, Info, Menu, X, ChevronRight, ArrowLeft, Star, Target, Heart, 
+            Activity, BarChart2, Edit3, CheckCircle, ArrowRight, LayoutDashboard, Compass, Lightbulb, School, Smile, 
+            Zap, Coffee, RefreshCw, Award, List, Download, Printer, PenTool, MessageSquare, ArrowRightCircle, 
+            UserCheck, Quote, Phone, Mail, MapPin, ScaleIcon, HandIcon, Lock, Trash2, Plus, AlertTriangle, Clock, Upload, Save
+        } = Icons;
+
+        const CAREER_INFO = [
+            {
+                title: "Bidang Pendidikan",
+                icon: <BookOpen className="w-6 h-6 text-white" />,
+                desc: "Berperan dalam mencerdaskan bangsa melalui pengajaran dan bimbingan.",
+                color: "from-blue-500 to-cyan-400",
+                professions: [
+                    { name: "Guru", desc: "Mengajar di sekolah formal (SD/SMP/SMA).", skills: "Komunikasi, Kesabaran, Manajemen Kelas" },
+                    { name: "Dosen", desc: "Mengajar mahasiswa & penelitian di Universitas.", skills: "Analisis, Publikasi Ilmiah, Public Speaking" },
+                    { name: "Tutor", desc: "Pengajar tambahan di bimbel/kursus.", skills: "Penguasaan Materi Spesifik, Adaptabilitas" }
+                ]
+            },
+            {
+                title: "Kesehatan & Medis",
+                icon: <Activity className="w-6 h-6 text-white" />,
+                desc: "Fokus pada penyembuhan, perawatan, dan peningkatan kualitas hidup.",
+                color: "from-emerald-500 to-green-400",
+                professions: [
+                    { name: "Dokter", desc: "Mendiagnosa dan mengobati penyakit.", skills: "Biologi, Empati, Pemecahan Masalah" },
+                    { name: "Perawat", desc: "Merawat pasien sehari-hari di RS.", skills: "Ketelitian, Fisik Kuat, Pelayanan" },
+                    { name: "Apoteker", desc: "Ahli meracik dan mengelola obat.", skills: "Kimia, Ketelitian, Manajemen Stok" }
+                ]
+            },
+            {
+                title: "Teknologi & IT",
+                icon: <Zap className="w-6 h-6 text-white" />,
+                desc: "Industri masa depan yang mengandalkan inovasi digital.",
+                color: "from-violet-500 to-purple-400",
+                professions: [
+                    { name: "Programmer", desc: "Menulis kode untuk membuat aplikasi.", skills: "Logika, Matematika, Bahasa Pemrograman" },
+                    { name: "Content Creator", desc: "Membuat konten digital (Video/Grafis).", skills: "Kreativitas, Editing, Social Media" },
+                    { name: "Network Eng.", desc: "Mengurus jaringan internet kantor/gedung.", skills: "Hardware, Troubleshooting, Networking" }
+                ]
+            },
+            {
+                title: "Seni & Kreatif",
+                icon: <Edit3 className="w-6 h-6 text-white" />,
+                desc: "Wadah bagi mereka yang imajinatif dan suka menciptakan karya.",
+                color: "from-rose-500 to-pink-400",
+                professions: [
+                    { name: "Desainer Grafis", desc: "Membuat visual branding/iklan.", skills: "Software Desain, Estetika, Warna" },
+                    { name: "UI/UX Designer", desc: "Merancang tampilan aplikasi yang nyaman.", skills: "Riset Pengguna, Prototyping" },
+                    { name: "Fotografer", desc: "Mengabadikan momen secara profesional.", skills: "Komposisi, Pencahayaan, Editing" }
+                ]
+            },
+            {
+                title: "Hukum & Sosial",
+                icon: <ScaleIcon className="w-6 h-6 text-white" />,
+                desc: "Berkaitan dengan keadilan, aturan, dan hubungan antarmanusia.",
+                color: "from-amber-500 to-orange-400",
+                professions: [
+                    { name: "Pengacara", desc: "Membela klien dalam masalah hukum.", skills: "Debat, Negosiasi, Pasal Hukum" },
+                    { name: "Psikolog", desc: "Membantu kesehatan mental seseorang.", skills: "Mendengar Aktif, Analisis Perilaku" },
+                    { name: "Jurnalis", desc: "Meliput dan memberitakan berita.", skills: "Menulis, Wawancara, Riset" }
+                ]
+            },
+            {
+                title: "Ekonomi & Bisnis",
+                icon: <BarChart2 className="w-6 h-6 text-white" />,
+                desc: "Dunia keuangan, manajemen usaha, dan kewirausahaan.",
+                color: "from-slate-600 to-slate-500",
+                professions: [
+                    { name: "Akuntan", desc: "Mengelola laporan keuangan perusahaan.", skills: "Matematika, Ketelitian, Excel" },
+                    { name: "Digital Marketer", desc: "Memasarkan produk secara online.", skills: "SEO, Ads, Analisis Data" },
+                    { name: "Pengusaha", desc: "Membangun bisnis sendiri dari nol.", skills: "Kepemimpinan, Resiko, Inovasi" }
+                ]
+            }
+        ];
+
+        const LEARNING_STYLES = [
+            { id: 'visual', title: 'Visual (Melihat)', icon: <BookOpen />, desc: 'Kamu lebih mudah belajar dengan melihat gambar, diagram, grafik, dan membaca.', tips: ['Gunakan spidol warna-warni', 'Buat peta konsep (mind map)', 'Tonton video pembelajaran'], strategy: "Catat materi dengan pulpen warna-warni, gunakan flashcards bergambar." },
+            { id: 'auditory', title: 'Auditori (Mendengar)', icon: <Activity />, desc: 'Kamu lebih mudah belajar dengan mendengarkan penjelasan guru atau diskusi.', tips: ['Rekam penjelasan guru', 'Belajar sambil berdiskusi', 'Baca materi dengan suara keras'], strategy: "Dengarkan podcast materi, belajar kelompok dengan tanya jawab lisan." },
+            { id: 'kinesthetic', title: 'Kinestetik (Bergerak)', icon: <HandIcon />, desc: 'Kamu lebih mudah belajar dengan mempraktikkan langsung atau sambil bergerak.', tips: ['Lakukan eksperimen/praktik', 'Belajar sambil berjalan-jalan', 'Gunakan objek nyata'], strategy: "Lakukan simulasi atau praktik langsung, jangan hanya diam duduk lama." }
+        ];
+
+        // --- DAFTAR SOAL LENGKAP (80 SOAL) ---
+        const DEFAULT_QUESTIONS = [
+            // SMA / AKADEMIK (1-20)
+            { id: 1, text: "Saya menikmati pelajaran yang membutuhkan analisis dan pemecahan masalah.", type: 'SMA' },
+            { id: 2, text: "Saya tertarik memperdalam ilmu pengetahuan secara teoritis.", type: 'SMA' },
+            { id: 3, text: "Saya senang mengikuti diskusi kelas tentang materi pelajaran.", type: 'SMA' },
+            { id: 4, text: "Saya merasa tertantang ketika mengerjakan soal kompleks.", type: 'SMA' },
+            { id: 5, text: "Saya memiliki target melanjutkan ke perguruan tinggi.", type: 'SMA' },
+            { id: 6, text: "Saya mampu belajar mandiri dengan membaca buku.", type: 'SMA' },
+            { id: 7, text: "Saya menyukai mata pelajaran berbasis teori.", type: 'SMA' },
+            { id: 8, text: "Saya merasa nilai akademik penting untuk masa depan.", type: 'SMA' },
+            { id: 9, text: "Saya mampu mengatur waktu belajar dengan baik.", type: 'SMA' },
+            { id: 10, text: "Saya percaya diri dalam kemampuan akademik saya.", type: 'SMA' },
+            { id: 11, text: "Saya tertarik mengikuti lomba akademik.", type: 'SMA' },
+            { id: 12, text: "Saya senang membuat rangkuman materi.", type: 'SMA' },
+            { id: 13, text: "Saya mampu berkonsentrasi lama saat belajar teori.", type: 'SMA' },
+            { id: 14, text: "Saya ingin profesi yang membutuhkan pendidikan tinggi.", type: 'SMA' },
+            { id: 15, text: "Saya menikmati tugas presentasi dan penelitian.", type: 'SMA' },
+            { id: 16, text: "Saya ingin memperluas wawasan ilmu pengetahuan umum.", type: 'SMA' },
+            { id: 17, text: "Saya lebih nyaman belajar di kelas dibanding praktik.", type: 'SMA' },
+            { id: 18, text: "Saya mulai mempertimbangkan jurusan kuliah.", type: 'SMA' },
+            { id: 19, text: "Saya mencari informasi tentang perguruan tinggi.", type: 'SMA' },
+            { id: 20, text: "Saya merasa pendidikan sarjana akan menunjang karier saya.", type: 'SMA' },
+
+            // SMK / VOKASI (21-40)
+            { id: 21, text: "Saya lebih suka pelajaran praktik langsung daripada teori di kelas.", type: 'SMK' },
+            { id: 22, text: "Saya ingin memiliki keterampilan khusus agar bisa langsung bekerja.", type: 'SMK' },
+            { id: 23, text: "Saya tertarik dengan dunia teknik atau permesinan.", type: 'SMK' },
+            { id: 24, text: "Saya senang memperbaiki barang yang rusak.", type: 'SMK' },
+            { id: 25, text: "Saya ingin cepat mandiri secara finansial setelah lulus.", type: 'SMK' },
+            { id: 26, text: "Saya lebih menyukai kegiatan di luar ruangan atau laboratorium.", type: 'SMK' },
+            { id: 27, text: "Saya tertarik dengan dunia kuliner atau perhotelan.", type: 'SMK' },
+            { id: 28, text: "Saya ingin belajar tentang komputer dan jaringan secara teknis.", type: 'SMK' },
+            { id: 29, text: "Saya merasa lebih kompeten dalam hal-hal praktis.", type: 'SMK' },
+            { id: 30, text: "Saya menyukai pelajaran kewirausahaan.", type: 'SMK' },
+            { id: 31, text: "Saya berencana membuka usaha sendiri nanti.", type: 'SMK' },
+            { id: 32, text: "Saya tertarik magang di industri.", type: 'SMK' },
+            { id: 33, text: "Saya lebih mudah memahami sesuatu dengan mempraktikkannya.", type: 'SMK' },
+            { id: 34, text: "Saya tidak keberatan bekerja dengan fisik.", type: 'SMK' },
+            { id: 35, text: "Saya tertarik dengan desain grafis atau multimedia.", type: 'SMK' },
+            { id: 36, text: "Saya ingin memiliki sertifikat kompetensi keahlian.", type: 'SMK' },
+            { id: 37, text: "Saya melihat peluang kerja lulusan SMK sangat luas.", type: 'SMK' },
+            { id: 38, text: "Saya suka merakit atau membuat sesuatu dengan tangan.", type: 'SMK' },
+            { id: 39, text: "Saya ingin mendalami bidang otomotif atau elektronika.", type: 'SMK' },
+            { id: 40, text: "Saya siap bekerja segera setelah lulus sekolah.", type: 'SMK' },
+
+            // MA / KEAGAMAAN (41-60)
+            { id: 41, text: "Saya ingin memperdalam ilmu agama secara lebih intensif.", type: 'MA' },
+            { id: 42, text: "Saya tertarik belajar bahasa Arab dan kitab kuning.", type: 'MA' },
+            { id: 43, text: "Saya merasa lingkungan religius penting untuk pendidikan saya.", type: 'MA' },
+            { id: 44, text: "Saya ingin menghafal Al-Qur'an (Tahfidz).", type: 'MA' },
+            { id: 45, text: "Saya ingin menjadi ahli atau pendakwah agama.", type: 'MA' },
+            { id: 46, text: "Saya senang mengikuti kegiatan kerohanian di sekolah.", type: 'MA' },
+            { id: 47, text: "Saya merasa nyaman dengan aturan sekolah berbasis agama.", type: 'MA' },
+            { id: 48, text: "Saya ingin menyeimbangkan ilmu umum dan agama.", type: 'MA' },
+            { id: 49, text: "Saya tertarik mempelajari sejarah kebudayaan Islam.", type: 'MA' },
+            { id: 50, text: "Saya ingin melanjutkan ke perguruan tinggi Islam (UIN/IAIN).", type: 'MA' },
+            { id: 51, text: "Saya merasa tenang ketika membaca kitab suci.", type: 'MA' },
+            { id: 52, text: "Saya ingin bergaul dengan teman yang sholeh/sholehah.", type: 'MA' },
+            { id: 53, text: "Saya tertarik dengan hukum-hukum Islam (Fiqih).", type: 'MA' },
+            { id: 54, text: "Saya ingin membanggakan orang tua dengan ilmu agama.", type: 'MA' },
+            { id: 55, text: "Saya suka mendengarkan ceramah agama.", type: 'MA' },
+            { id: 56, text: "Saya ingin berkontribusi di masyarakat melalui agama.", type: 'MA' },
+            { id: 57, text: "Saya merasa pendidikan karakter agama sangat utama.", type: 'MA' },
+            { id: 58, text: "Saya ingin belajar di lingkungan pesantren.", type: 'MA' },
+            { id: 59, text: "Saya tertarik dengan seni budaya Islam.", type: 'MA' },
+            { id: 60, text: "Saya yakin pendidikan agama adalah bekal dunia akhirat.", type: 'MA' },
+
+            // KESIAPAN (61-80)
+            { id: 61, text: "Saya sudah mulai mencari informasi tentang sekolah lanjutan.", type: 'KESIAPAN' },
+            { id: 62, text: "Saya sudah berbicara dengan orang tua mengenai rencana sekolah saya.", type: 'KESIAPAN' },
+            { id: 63, text: "Saya mengetahui bakat dan minat saya dengan jelas.", type: 'KESIAPAN' },
+            { id: 64, text: "Saya sudah memiliki pilihan sekolah prioritas.", type: 'KESIAPAN' },
+            { id: 65, text: "Saya berdiskusi dengan orang tua.", type: 'KESIAPAN' },
+            { id: 66, text: "Saya berdiskusi dengan guru BK.", type: 'KESIAPAN' },
+            { id: 67, text: "Saya mempertimbangkan peluang kerja.", type: 'KESIAPAN' },
+            { id: 68, text: "Saya mempertimbangkan kemampuan akademik.", type: 'KESIAPAN' },
+            { id: 69, text: "Saya tidak mudah terpengaruh teman.", type: 'KESIAPAN' },
+            { id: 70, text: "Saya membuat daftar pertimbangan sebelum memilih.", type: 'KESIAPAN' },
+            { id: 71, text: "Saya memiliki tujuan jangka panjang.", type: 'KESIAPAN' },
+            { id: 72, text: "Saya mempertimbangkan risiko setiap pilihan.", type: 'KESIAPAN' },
+            { id: 73, text: "Saya siap bertanggung jawab atas pilihan.", type: 'KESIAPAN' },
+            { id: 74, text: "Saya merasa tenang dengan pilihan saya.", type: 'KESIAPAN' },
+            { id: 75, text: "Saya memiliki rencana cadangan.", type: 'KESIAPAN' },
+            { id: 76, text: "Saya memahami hubungan jurusan dan karier.", type: 'KESIAPAN' },
+            { id: 77, text: "Saya aktif mencari informasi sekolah lanjutan.", type: 'KESIAPAN' },
+            { id: 78, text: "Saya mempertimbangkan biaya pendidikan.", type: 'KESIAPAN' },
+            { id: 79, text: "Keputusan saya berdasarkan pertimbangan matang.", type: 'KESIAPAN' },
+            { id: 80, text: "Saya siap menentukan sekolah sesuai bakat dan minat.", type: 'KESIAPAN' },
+        ];
+
+        const Card = ({ children, className = "" }) => <div className={`bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 ${className}`}>{children}</div>;
+        const SectionHeader = ({ title, subtitle }) => <div className="mb-8"><h2 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight text-slate-900">{title}</h2>{subtitle && <p className="text-slate-500 mt-2">{subtitle}</p>}</div>;
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const [isOfflineMode, setIsOfflineMode] = useState(!window.isFirebaseReady);
+            const resultRef = useRef(null);
+            
+            const [user, setUser] = useState(null);
+            const [authLoading, setAuthLoading] = useState(true);
+            const [loginEmail, setLoginEmail] = useState("");
+            const [loginPassword, setLoginPassword] = useState("");
+            const [loginError, setLoginError] = useState("");
+
+            const [questions, setQuestions] = useState(DEFAULT_QUESTIONS);
+            const [studentResults, setStudentResults] = useState([]);
+            const [isLoadingData, setIsLoadingData] = useState(false);
+
+            const [editingQuestion, setEditingQuestion] = useState(null);
+            const [newQuestionText, setNewQuestionText] = useState("");
+            const [newQuestionType, setNewQuestionType] = useState("SMA");
+
+            const [studentData, setStudentData] = useState({ name: '', className: '' });
+            const [reflectionData, setReflectionData] = useState({ minatBakat: '', karierImpian: '', rencanaPendidikan: '' });
+            const [isReflectionSaved, setIsReflectionSaved] = useState(false);
+
+            const [quizState, setQuizState] = useState('intro');
+            const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+            const [answers, setAnswers] = useState({});
+            const [quizResult, setQuizResult] = useState(null);
+            const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+            
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [logoError, setLogoError] = useState(false);
+
+            // STATE UNTUK PENGATURAN TAMPILAN (DYNAMIC CONFIG)
+            const [config, setConfig] = useState(DEFAULT_CONFIG);
+
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+
+                if (window.auth && !isOfflineMode) {
+                    try {
+                        const unsubscribe = window.onAuthStateChanged(window.auth, (currentUser) => {
+                            setUser(currentUser);
+                            setAuthLoading(false);
+                            if (currentUser) {
+                                fetchAdminData();
+                            }
+                        }, (error) => {
+                             console.warn("Auth listener failed, switching to offline mode");
+                             setIsOfflineMode(true);
+                             setAuthLoading(false);
+                        });
+                        return () => {
+                            unsubscribe();
+                            clearInterval(timer);
+                        };
+                    } catch (e) {
+                        setIsOfflineMode(true);
+                        setAuthLoading(false);
+                        return () => clearInterval(timer);
+                    }
+                } else {
+                    setAuthLoading(false);
+                    return () => clearInterval(timer);
+                }
+            }, [isOfflineMode]);
+
+            useEffect(() => {
+                fetchQuestions();
+                fetchConfig(); // Fetch custom logo/images
+            }, []);
+
+            const fetchQuestions = async () => {
+                if (!window.db || isOfflineMode) {
+                    setQuestions(DEFAULT_QUESTIONS);
+                    return;
+                }
+                try {
+                    const q = window.query(window.collection(window.db, "questions"), window.orderBy("id", "asc"));
+                    const querySnapshot = await window.getDocs(q);
+                    const loadedQuestions = [];
+                    querySnapshot.forEach((doc) => {
+                        loadedQuestions.push({ firebaseId: doc.id, ...doc.data() });
+                    });
+                    
+                    if (loadedQuestions.length > 0) {
+                        setQuestions(loadedQuestions);
+                    } else {
+                         setQuestions(DEFAULT_QUESTIONS);
+                    }
+                } catch (error) {
+                    console.warn("Error fetching questions, using defaults:", error);
+                    setIsOfflineMode(true);
+                    setQuestions(DEFAULT_QUESTIONS);
+                }
+            };
+
+            const fetchAdminData = async () => {
+                if (!window.db || isOfflineMode) return;
+                try {
+                    const q = window.query(window.collection(window.db, "results"), window.orderBy("timestamp", "desc"));
+                    const querySnapshot = await window.getDocs(q);
+                    const results = [];
+                    querySnapshot.forEach((doc) => {
+                        results.push({ id: doc.id, ...doc.data() });
+                    });
+                    setStudentResults(results);
+                } catch (error) {
+                    console.error("Error fetching results:", error);
+                    alert("Gagal mengambil data dari database. Mode Offline aktif.");
+                    setIsOfflineMode(true);
+                }
+            };
+
+            // Fetch App Settings (Logo, Hero, dll)
+            const fetchConfig = async () => {
+                if (!window.db || isOfflineMode) return;
+                try {
+                    const docRef = window.doc(window.db, "settings", "general");
+                    const docSnap = await window.getDoc(docRef);
+                    if (docSnap.exists()) {
+                        // Merge default with fetched data to ensure all keys exist
+                        setConfig(prev => ({...prev, ...docSnap.data()}));
+                    }
+                } catch (e) {
+                    console.error("Error fetching settings:", e);
+                }
+            };
+
+            // Save App Settings
+            const saveConfig = async () => {
+                if (!window.db || isOfflineMode) return alert("Mode Offline/Demo tidak bisa menyimpan pengaturan.");
+                try {
+                    await window.setDoc(window.doc(window.db, "settings", "general"), config);
+                    alert("Pengaturan berhasil disimpan! Perubahan akan terlihat setelah refresh.");
+                } catch (e) {
+                    alert("Gagal menyimpan: " + e.message);
+                }
+            };
+
+            // Handle File Upload (Convert to Base64)
+            const handleFileChange = (e, field) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 500000) { // Limit 500KB
+                        alert("Ukuran file terlalu besar! Maksimal 500KB agar database tidak berat.");
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setConfig(prev => ({ ...prev, [field]: reader.result }));
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // --- DOWNLOAD EXCEL FUNCTION ---
+            const handleDownloadExcel = () => {
+                if (studentResults.length === 0) {
+                    alert("Belum ada data untuk diunduh.");
+                    return;
+                }
+
+                // 1. Format Data
+                const data = studentResults.map((res, index) => {
+                    // Helper safe access
+                    const getScore = (type) => {
+                        if (!res.results) return 0;
+                        const found = res.results.find(r => r.type === type);
+                        return found ? found.percentage : 0;
+                    };
+
+                    return {
+                        "No": index + 1,
+                        "Tanggal": res.timestamp ? new Date(res.timestamp.seconds * 1000).toLocaleDateString('id-ID') : '-',
+                        "Nama Siswa": res.name,
+                        "Kelas": res.className,
+                        "Minat Dominan": res.topInterest || '-',
+                        "Skor SMA (%)": getScore('SMA'),
+                        "Skor SMK (%)": getScore('SMK'),
+                        "Skor MA (%)": getScore('MA'),
+                        "Kesiapan (%)": getScore('KESIAPAN')
+                    };
+                });
+
+                // 2. Create Worksheet & Workbook
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                
+                // Auto-width columns
+                const wscols = [
+                    {wch: 5},  // No
+                    {wch: 15}, // Tanggal
+                    {wch: 25}, // Nama
+                    {wch: 10}, // Kelas
+                    {wch: 15}, // Minat
+                    {wch: 12}, // SMA
+                    {wch: 12}, // SMK
+                    {wch: 12}, // MA
+                    {wch: 12}  // Kesiapan
+                ];
+                ws['!cols'] = wscols;
+
+                XLSX.utils.book_append_sheet(wb, ws, "Rekap Data");
+
+                // 3. Export
+                XLSX.writeFile(wb, `Rekap_Hasil_Tes_BK_${new Date().toISOString().slice(0,10)}.xlsx`);
+            };
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                setLoginError("");
+
+                if (loginEmail === "admin@demo.com" && loginPassword === "admin123") {
+                    setUser({ email: "admin@demo.com", uid: "demo-user" });
+                    setActiveTab('admin-dashboard');
+                    return;
+                }
+
+                if (isOfflineMode) {
+                    setLoginError("Mode Offline aktif. Gunakan email: admin@demo.com & pass: admin123");
+                    return;
+                }
+
+                try {
+                    await window.signInWithEmailAndPassword(window.auth, loginEmail, loginPassword);
+                    setActiveTab('admin-dashboard');
+                } catch (error) {
+                    setLoginError("Email atau Password salah. (Atau gunakan login demo)");
+                }
+            };
+
+            const handleLogout = async () => {
+                if (user?.uid === "demo-user") {
+                    setUser(null);
+                } else if (window.auth) {
+                    await window.signOut(window.auth);
+                }
+                setActiveTab('dashboard');
+            };
+
+            const handleAddQuestion = async () => {
+                if (isOfflineMode) return alert("Mode Demo: Soal tidak akan tersimpan permanen.");
+                
+                const newId = questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1;
+                const newQ = { id: newId, text: newQuestionText, type: newQuestionType };
+                
+                try {
+                    await window.addDoc(window.collection(window.db, "questions"), newQ);
+                    setNewQuestionText("");
+                    fetchQuestions(); 
+                } catch (e) {
+                    alert("Gagal menambah soal. Cek koneksi.");
+                }
+            };
+
+            const handleDeleteQuestion = async (firebaseId) => {
+                if (isOfflineMode) return alert("Mode Demo: Tidak dapat menghapus soal.");
+                if (!confirm("Hapus soal ini?")) return;
+                try {
+                    await window.deleteDoc(window.doc(window.db, "questions", firebaseId));
+                    fetchQuestions();
+                } catch (e) {
+                    alert("Gagal menghapus");
+                }
+            };
+
+            const handleNavigate = (id) => {
+                setActiveTab(id);
+                setIsMenuOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const goToInputName = () => setQuizState('inputName');
+
+            const startQuiz = (e) => {
+                e.preventDefault();
+                if (!studentData.name || !studentData.className) return alert("Mohon isi Nama dan Kelas terlebih dahulu.");
+                setAnswers({});
+                setCurrentQuestionIdx(0);
+                setQuizState('playing');
+            };
+
+            const handleAnswer = (score) => {
+                const question = questions[currentQuestionIdx];
+                setAnswers(prev => ({ ...prev, [question.id]: score }));
+                if (currentQuestionIdx < questions.length - 1) {
+                    setCurrentQuestionIdx(prev => prev + 1);
+                } else {
+                    setTimeout(() => finishQuiz({ ...answers, [question.id]: score }), 100);
+                }
+            };
+
+            const calculatePercentage = (totalScore, maxScore) => Math.round((totalScore / maxScore) * 100);
+
+            // LOGIKA INTERPRETASI PER KATEGORI (MAX 80 POIN PER KATEGORI)
+            const getInterpretation = (percentage, type) => {
+                if (type === 'KESIAPAN') {
+                    if (percentage >= 86) return { text: "Sangat Siap & Yakin", color: "text-green-700", bg: "bg-green-100" };
+                    if (percentage >= 76) return { text: "Siap Dengan Pilihan", color: "text-emerald-700", bg: "bg-emerald-100" };
+                    if (percentage >= 60) return { text: "Cukup Siap", color: "text-blue-700", bg: "bg-blue-100" };
+                    if (percentage >= 55) return { text: "Kurang Siap", color: "text-orange-700", bg: "bg-orange-100" };
+                    return { text: "Belum Siap Memilih", color: "text-red-700", bg: "bg-red-100" };
+                } else {
+                    if (percentage >= 86) return { text: "Sangat Berminat", color: "text-green-700", bg: "bg-green-100" };
+                    if (percentage >= 76) return { text: "Berminat", color: "text-emerald-700", bg: "bg-emerald-100" };
+                    if (percentage >= 60) return { text: "Cukup Berminat", color: "text-blue-700", bg: "bg-blue-100" };
+                    if (percentage >= 55) return { text: "Kurang Berminat", color: "text-orange-700", bg: "bg-orange-100" };
+                    return { text: "Tidak Berminat", color: "text-red-700", bg: "bg-red-100" };
+                }
+            };
+
+            const finishQuiz = async (finalAnswers) => {
+                const scores = { SMA: { total: 0, count: 0 }, SMK: { total: 0, count: 0 }, MA: { total: 0, count: 0 }, KESIAPAN: { total: 0, count: 0 } };
+                
+                questions.forEach(q => {
+                    const score = finalAnswers[q.id] || 0;
+                    if (scores[q.type]) { scores[q.type].total += score; scores[q.type].count += 1; }
+                });
+
+                const results = Object.keys(scores).map(type => {
+                    const maxScore = 80; // Skor maksimal per kategori (20 soal * 4 skor tertinggi)
+                    const percentage = maxScore === 0 ? 0 : calculatePercentage(scores[type].total, maxScore);
+                    return { type, percentage, interpretation: getInterpretation(percentage, type) };
+                });
+
+                const sortedInterests = results.filter(r => r.type !== 'KESIAPAN').sort((a, b) => b.percentage - a.percentage);
+                const topInterest = sortedInterests[0];
+
+                setQuizResult(results);
+                setQuizState('result');
+
+                if (window.db && !isOfflineMode) {
+                    try {
+                        await window.addDoc(window.collection(window.db, "results"), {
+                            name: studentData.name,
+                            className: studentData.className,
+                            timestamp: window.serverTimestamp(),
+                            results: results,
+                            topInterest: topInterest.type
+                        });
+                        console.log("Result saved to DB");
+                    } catch (e) {
+                        console.error("Error saving result", e);
+                    }
+                }
+            };
+
+            const handleDownloadPDF = async () => {
+                if (!resultRef.current) return;
+                setIsGeneratingPDF(true);
+                try {
+                    const canvas = await window.html2canvas(resultRef.current, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', [215, 330]);
+                    const imgProps = pdf.getImageProperties(imgData);
+                    const ratio = Math.min((215 - 20) / imgProps.width, (330 - 20) / imgProps.height);
+                    pdf.addImage(imgData, 'PNG', (215 - imgProps.width * ratio) / 2, 15, imgProps.width * ratio, imgProps.height * ratio);
+                    const safeName = studentData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    pdf.save(`Hasil-Tes-${safeName}.pdf`);
+                } catch (error) {
+                    alert("Gagal membuat PDF.");
+                } finally {
+                    setIsGeneratingPDF(false);
+                }
+            };
+
+            // --- RENDER FUNCTIONS ---
+            const renderAdminLogin = () => (
+                <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
+                    <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 max-w-md w-full">
+                        <div className="flex justify-center mb-6"><div className="bg-indigo-100 p-3 rounded-full text-indigo-600"><Lock size={32}/></div></div>
+                        <h2 className="text-2xl font-bold text-center mb-6 text-slate-800">Login Guru BK</h2>
+                        {loginError && <p className="text-red-500 text-sm text-center mb-4 bg-red-50 p-2 rounded">{loginError}</p>}
+                        
+                        {isOfflineMode && (
+                            <div className="mb-4 bg-amber-50 border border-amber-200 p-3 rounded-lg text-xs text-amber-800 flex gap-2">
+                                <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
+                                <div>Mode Demo Aktif. Gunakan:<br/>Email: <b>admin@demo.com</b><br/>Password: <b>admin123</b></div>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            <div><label className="block text-sm font-bold text-slate-700 mb-1">Email</label><input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="admin@sekolah.com" required/></div>
+                            <div><label className="block text-sm font-bold text-slate-700 mb-1">Password</label><input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••" required/></div>
+                            <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition">Masuk</button>
+                        </form>
+                        <button onClick={() => setActiveTab('dashboard')} className="mt-4 text-slate-500 text-sm w-full text-center hover:text-indigo-600">Kembali ke Beranda</button>
+                    </div>
+                </div>
+            );
+
+            const renderAdminDashboard = () => (
+                <div className="space-y-8 animate-fade-in max-w-6xl mx-auto">
+                    <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <div><h2 className="text-2xl font-bold text-slate-800">Dashboard Guru BK</h2><p className="text-slate-500">Selamat datang, {user?.email}</p></div>
+                        <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold hover:bg-red-100 flex items-center gap-2"><ArrowLeft size={18}/> Logout</button>
+                    </div>
+
+                    {isOfflineMode && (
+                        <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded shadow-sm flex items-center gap-3">
+                            <AlertTriangle />
+                            <div>
+                                <p className="font-bold">Mode Demo / Offline</p>
+                                <p className="text-sm">Database belum terhubung. Data siswa tidak akan tersimpan, dan perubahan soal bersifat sementara.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {/* 1. REKAP SISWA */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <div className="flex items-center gap-3 mb-4 border-b pb-4"><List size={24} className="text-indigo-600"/><h3 className="text-xl font-bold">Rekap Hasil Tes Siswa</h3></div>
+                            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-slate-50 text-slate-500 font-bold sticky top-0"><tr><th className="p-3">Tanggal</th><th className="p-3">Nama</th><th className="p-3">Kelas</th><th className="p-3">Minat</th></tr></thead>
+                                    <tbody className="divide-y">
+                                        {studentResults.length === 0 ? <tr><td colSpan="4" className="p-4 text-center text-slate-400">Belum ada data masuk (atau Database Offline).</td></tr> : 
+                                        studentResults.map((res) => (
+                                            <tr key={res.id} className="hover:bg-slate-50">
+                                                <td className="p-3 text-slate-500">{res.timestamp ? new Date(res.timestamp.seconds * 1000).toLocaleDateString() : '-'}</td>
+                                                <td className="p-3 font-bold">{res.name}</td>
+                                                <td className="p-3">{res.className}</td>
+                                                <td className="p-3"><span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold">{res.topInterest}</span></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="flex gap-2 mt-4">
+                                <button onClick={fetchAdminData} className="text-indigo-600 text-sm font-bold flex items-center gap-1 hover:underline"><RefreshCw size={14}/> Refresh Data</button>
+                                <button onClick={handleDownloadExcel} className="text-green-600 text-sm font-bold flex items-center gap-1 hover:underline ml-4"><Download size={14}/> Download Rekap (CSV)</button>
+                            </div>
+                        </div>
+
+                        {/* 2. EDITOR SOAL */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <div className="flex items-center gap-3 mb-4 border-b pb-4"><Edit3 size={24} className="text-green-600"/><h3 className="text-xl font-bold">Editor Soal Tes</h3></div>
+                            
+                            <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <h4 className="text-sm font-bold mb-2">Tambah Soal Baru</h4>
+                                <div className="flex gap-2 mb-2">
+                                    <select value={newQuestionType} onChange={e => setNewQuestionType(e.target.value)} className="p-2 rounded border border-slate-300 text-sm"><option value="SMA">SMA</option><option value="SMK">SMK</option><option value="MA">MA</option><option value="KESIAPAN">Kesiapan</option></select>
+                                    <input type="text" value={newQuestionText} onChange={e => setNewQuestionText(e.target.value)} className="flex-1 p-2 rounded border border-slate-300 text-sm" placeholder="Isi pertanyaan..."/>
+                                </div>
+                                <button onClick={handleAddQuestion} className="w-full bg-green-600 text-white py-2 rounded font-bold text-sm hover:bg-green-700 flex justify-center gap-2"><Plus size={16}/> Tambah Soal</button>
+                            </div>
+
+                            <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+                                {questions.map((q) => (
+                                    <div key={q.id} className="flex justify-between items-start bg-white border border-slate-200 p-3 rounded-lg text-sm group hover:border-indigo-300">
+                                        <div><span className={`text-[10px] font-bold px-1.5 py-0.5 rounded mr-2 ${q.type === 'SMA' ? 'bg-blue-100 text-blue-600' : q.type === 'SMK' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>{q.type}</span> {q.text}</div>
+                                        {q.firebaseId && <button onClick={() => handleDeleteQuestion(q.firebaseId)} className="text-slate-300 hover:text-red-500 ml-2"><Trash2 size={16}/></button>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 3. PENGATURAN TAMPILAN (NEW) */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 md:col-span-2">
+                            <div className="flex items-center gap-3 mb-4 border-b pb-4">
+                                <LayoutDashboard size={24} className="text-orange-500"/>
+                                <h3 className="text-xl font-bold">Pengaturan Tampilan</h3>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-3 gap-6">
+                                {/* LOGO */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-slate-700">Logo Sekolah</label>
+                                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-center mb-2 h-24 items-center">
+                                        <img src={config.logoUrl || APP_LOGO_SRC} alt="Logo Preview" className="h-16 object-contain" referrerPolicy="no-referrer" />
+                                    </div>
+                                    <label className="cursor-pointer bg-white border border-slate-300 text-slate-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 flex items-center justify-center gap-2">
+                                        <Upload size={14}/> Ganti Logo
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'logoUrl')} />
+                                    </label>
+                                </div>
+
+                                {/* HERO IMAGE */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-slate-700">Gambar Beranda (Hero)</label>
+                                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-center mb-2 h-24 items-center overflow-hidden">
+                                        <img src={config.heroUrl || HERO_IMAGE_SRC} alt="Hero Preview" className="w-full h-full object-cover rounded" referrerPolicy="no-referrer" />
+                                    </div>
+                                    <label className="cursor-pointer bg-white border border-slate-300 text-slate-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 flex items-center justify-center gap-2">
+                                        <Upload size={14}/> Ganti Gambar
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'heroUrl')} />
+                                    </label>
+                                </div>
+
+                                {/* FOTO GURU */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-slate-700">Foto Guru BK</label>
+                                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-center mb-2 h-24 items-center">
+                                        <img src={config.guruUrl || GURU_FOTO_SRC} alt="Guru Preview" className="h-20 w-20 object-cover rounded-full" referrerPolicy="no-referrer" />
+                                    </div>
+                                    <label className="cursor-pointer bg-white border border-slate-300 text-slate-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 flex items-center justify-center gap-2">
+                                        <Upload size={14}/> Ganti Foto
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'guruUrl')} />
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Nama Guru</label>
+                                    <input type="text" value={config.guruName} onChange={(e) => setConfig({...config, guruName: e.target.value})} className="w-full p-2 border border-slate-300 rounded text-sm"/>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">NIP Guru</label>
+                                    <input type="text" value={config.guruNip} onChange={(e) => setConfig({...config, guruNip: e.target.value})} className="w-full p-2 border border-slate-300 rounded text-sm"/>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex justify-end">
+                                <button onClick={saveConfig} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-lg">
+                                    <Save size={18}/> Simpan Pengaturan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // ... (KODE LAMA UNTUK RENDER DASHBOARD, MENGENAL DIRI, DLL TETAP SAMA) ...
+            const renderDashboard = () => {
+                const timeOption = { hour: '2-digit', minute: '2-digit' };
+                const dateOption = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+                const timeStr = currentTime.toLocaleTimeString('id-ID', timeOption);
+                const dateStr = currentTime.toLocaleDateString('id-ID', dateOption);
+
+                return (
+                <div className="space-y-8 animate-fade-in pb-24 md:pb-8">
+                     {isOfflineMode && (
+                        <div className="bg-amber-100 text-amber-800 text-xs text-center py-2 px-4 rounded-lg border border-amber-200 shadow-sm mx-auto max-w-2xl mb-4 flex items-center justify-center gap-2">
+                            <AlertTriangle size={14} />
+                            <span><b>Mode Demo:</b> Database belum terhubung. Ganti Config Firebase di kode untuk mengaktifkan penyimpanan.</span>
+                        </div>
+                     )}
+
+                     <div className="relative overflow-hidden bg-gradient-to-br from-indigo-700 via-blue-600 to-blue-500 rounded-[2rem] text-white shadow-2xl isolate">
+                        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-400 rounded-full mix-blend-screen filter blur-3xl opacity-20"></div>
+                        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-400 rounded-full mix-blend-screen filter blur-3xl opacity-20"></div>
+                        <div className="relative z-10 p-8 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
+                            <div className="flex-1 text-center lg:text-left">
+                                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-6">
+                                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-semibold border border-white/20 text-blue-50">
+                                        <Star className="w-3.5 h-3.5 text-yellow-300" fill="currentColor" />
+                                        <span className="tracking-wide">PORTAL BK DIGITAL</span>
+                                    </div>
+                                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-medium border border-white/20 text-indigo-50">
+                                        <Clock size={14} className="text-indigo-200"/>
+                                        <span>{timeStr} WIB</span>
+                                        <span className="w-1 h-1 bg-white/30 rounded-full"></span>
+                                        <span>{dateStr}</span>
+                                    </div>
+                                </div>
+                                <h1 className="text-3xl md:text-5xl font-extrabold mb-6 leading-tight tracking-tight animate-slide-left">Selamat Datang di <br className="hidden md:block"/><span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-100 to-yellow-200 drop-shadow-sm">WEB APRIKA KARIER</span></h1>
+                                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-inner max-w-2xl mx-auto lg:mx-0 animate-fade-in-up animation-delay-200"><p className="text-blue-50 text-sm md:text-base font-medium italic mb-3 opacity-90">"Wahana Edukasi Berbasis Digital – Analisis Potensi dan Refleksi Individu untuk Keputusan Arah Karier"</p><div className="h-px w-full bg-gradient-to-r from-transparent via-white/30 to-transparent my-3"></div><p className="text-white/90 text-sm leading-relaxed">Sahabat masa depan siswa Kelas IX SMP PGRI 1 Cikadu untuk merancang kesuksesan karier sejak dini.</p></div>
+                            </div>
+                            <div className="flex-1 flex justify-center lg:justify-end relative"><div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center animate-float"><div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent rounded-full animate-blob"></div><div className="relative bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 shadow-2xl transform rotate-3 hover:rotate-0 transition-all duration-500 overflow-hidden"><img src={config.heroUrl || HERO_IMAGE_SRC} alt="Ilustrasi" className="w-full h-full object-cover rounded-2xl" referrerPolicy="no-referrer" /></div></div></div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow group animate-fade-in-up animation-delay-300" style={{ animationDelay: '200ms' }}><div className="flex items-center gap-4 mb-4"><div className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors"><Info size={24}/></div><h3 className="font-bold text-lg text-slate-800">Tentang Aplikasi</h3></div><p className="text-slate-600 text-sm leading-relaxed text-justify">Inovasi layanan BK digital oleh <strong>Apriyanti Kartika</strong> untuk memfasilitasi siswa mengenal potensi, memahami studi lanjut, dan merencanakan masa depan.</p></div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow group animate-fade-in-up animation-delay-400" style={{ animationDelay: '400ms' }}><div className="flex items-center gap-4 mb-4"><div className="bg-purple-50 p-3 rounded-xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors"><Lightbulb size={24}/></div><h3 className="font-bold text-lg text-slate-800">Filosofi</h3></div><p className="text-slate-600 text-sm leading-relaxed mb-2 italic">"Karier bukan sekadar memilih sekolah, tapi merancang masa depan."</p><div className="flex flex-wrap gap-2"><span className="bg-purple-50 text-purple-700 text-xs px-2 py-1 rounded-md font-medium">Kenali Diri</span><span className="bg-purple-50 text-purple-700 text-xs px-2 py-1 rounded-md font-medium">Analisis Bijak</span><span className="bg-purple-50 text-purple-700 text-xs px-2 py-1 rounded-md font-medium">Percaya Diri</span></div></div>
+                    </div>
+                    <div className="pt-4"><div className="flex items-center gap-3 mb-6"><div className="h-8 w-1 bg-indigo-600 rounded-full"></div><h3 className="font-bold text-xl text-slate-800">Menu Utama</h3></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> 
+                            {[
+                                { id: 'mengenal-diri', title: "Siapa Aku?", desc: "Kenali Gaya Belajar & Kepribadianmu", icon: <Smile className="text-pink-500" />, color: "bg-pink-50" },
+                                { id: 'info-karir', title: "Dunia Kerja", desc: "Eksplorasi Berbagai Jenis Profesi", icon: <Briefcase className="text-blue-500" />, color: "bg-blue-50" },
+                                { id: 'studi-lanjut', title: "Kampus Impian", desc: "Pahami SMA, SMK, dan MA", icon: <School className="text-emerald-500" />, color: "bg-emerald-50" },
+                                { id: 'refleksi-diri', title: "Refleksi Diri", desc: "Catat Harapan & Rencana Masa Depan", icon: <MessageSquare className="text-purple-500" />, color: "bg-purple-50" },
+                                { id: 'tes-minat', title: "Tes Peminatan", desc: "Cek Kecenderungan Arah Sekolah", icon: <CheckCircle className="text-amber-500" />, color: "bg-amber-50" },
+                                { id: 'profil-guru', title: "Guru BK", desc: "Profil & Kontak Konseling", icon: <UserCheck className="text-indigo-500" />, color: "bg-indigo-50" },
+                            ].map((item, index) => (
+                                <div key={item.id} onClick={() => handleNavigate(item.id)} style={{ animationDelay: `${index * 100}ms` }} className={`${item.color} p-4 rounded-xl cursor-pointer hover:scale-[1.02] transition-transform border border-white/50 shadow-sm flex items-start gap-4 animate-fade-in-up`}><div className="bg-white p-3 rounded-lg shadow-sm flex-shrink-0">{item.icon}</div><div><h3 className="font-bold text-slate-800 text-base">{item.title}</h3><p className="text-sm text-slate-600 mt-1 leading-snug">{item.desc}</p></div></div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+            };
+
+            const renderMengenalDiri = () => (
+                <div className="space-y-8 animate-fade-in">
+                    <button onClick={() => handleNavigate('dashboard')} className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 mb-6 transition-all group"><div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm group-hover:border-indigo-200 group-hover:bg-indigo-50"><ArrowLeft size={20} /></div><span className="font-semibold text-sm">Kembali ke Beranda</span></button>
+                    <SectionHeader title="Mengenal Potensi Diri" subtitle="Kenali gaya belajar dan tipe kepribadianmu untuk strategi belajar yang lebih efektif." />
+                    <div className="bg-gradient-to-br from-indigo-50 to-white rounded-3xl border border-indigo-100 p-6 md:p-8 relative overflow-hidden mb-8 shadow-sm">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                        <div className="flex items-center gap-3 mb-6 relative z-10"><div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200"><Compass size={24} /></div><div><h3 className="text-xl md:text-2xl font-bold text-slate-800">Teori Karier Donald Super</h3><p className="text-sm text-indigo-600 font-medium">Life-Span, Life-Space Theory</p></div></div>
+                        <div className="prose prose-slate max-w-none relative z-10 text-slate-600 text-sm leading-relaxed text-justify space-y-4"><p>Dalam merencanakan masa depan, siswa perlu memahami bahwa karier bukan keputusan yang terjadi secara tiba-tiba. Menurut Donald Super, karier adalah <strong>proses perkembangan sepanjang hidup</strong> yang dipengaruhi oleh konsep diri.</p><div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm my-4"><h4 className="font-bold text-slate-800 mb-2 flex items-center gap-2"><span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>Mengenal Potensi Diri</h4><p className="mb-2">Konsep diri meliputi:</p><ul className="list-disc pl-5 space-y-1 bg-slate-50 p-3 rounded-lg"><li>Minat (apa yang disukai)</li><li>Bakat (kemampuan yang dimiliki)</li><li>Nilai hidup (apa yang dianggap penting)</li></ul></div></div>
+                    </div>
+                    <div className="space-y-6"><div className="flex items-center gap-3 mb-4"><div className="bg-indigo-100 p-2 rounded-lg text-indigo-600"><BookOpen size={24}/></div><h3 className="text-2xl font-bold text-slate-800">Gaya Belajar</h3></div><div className="grid md:grid-cols-3 gap-6">{LEARNING_STYLES.map((style) => (<Card key={style.id} className="relative overflow-hidden group h-full"><div className="p-6 flex flex-col h-full"><div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4 text-indigo-600 group-hover:scale-110 transition-transform duration-300 group-hover:bg-indigo-600 group-hover:text-white shadow-sm flex-shrink-0">{style.icon}</div><h4 className="text-lg font-bold text-slate-800 mb-2">{style.title}</h4><p className="text-slate-500 text-sm mb-4 leading-relaxed flex-grow">{style.desc}</p><div className="space-y-4 mt-auto"><div className="bg-slate-50 p-3 rounded-lg border border-slate-100"><p className="text-xs font-bold text-indigo-600 uppercase mb-1">Tips Belajar:</p><ul className="space-y-1">{style.tips.map((tip, i) => (<li key={i} className="text-xs text-slate-600 flex items-start gap-1.5"><span className="text-green-500 mt-0.5">•</span> {tip}</li>))}</ul></div></div></div></Card>))}</div></div>
+                </div>
+            );
+
+            const renderInfoKarir = () => (
+                <div className="space-y-8 animate-fade-in">
+                    <button onClick={() => handleNavigate('dashboard')} className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 mb-6 transition-all group"><div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm group-hover:border-indigo-200 group-hover:bg-indigo-50"><ArrowLeft size={20} /></div><span className="font-semibold text-sm">Kembali ke Beranda</span></button>
+                    <SectionHeader title="Eksplorasi Karir" subtitle="Jelajahi berbagai bidang profesi untuk menemukan panggilan masa depanmu." />
+                    <div className="grid gap-8">{CAREER_INFO.map((item, index) => (<div key={index} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100"><div className={`bg-gradient-to-r ${item.color} p-6 sm:p-8 text-white`}><div className="flex items-center gap-4 mb-2"><div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">{React.cloneElement(item.icon, { size: 32 })}</div><h3 className="text-2xl font-bold">{item.title}</h3></div><p className="text-blue-50 opacity-90 pl-[4.5rem] text-sm sm:text-base">{item.desc}</p></div><div className="p-6 sm:p-8 grid md:grid-cols-3 gap-6">{item.professions.map((prof, idx) => (<div key={idx} className="bg-slate-50 rounded-xl p-5 border border-slate-100 hover:border-indigo-200 transition-colors"><h4 className="font-bold text-indigo-700 text-lg mb-2">{prof.name}</h4><p className="text-sm text-slate-600 mb-4 h-10">{prof.desc}</p><div className="space-y-2 pt-4 border-t border-slate-200"><div><span className="text-[10px] uppercase font-bold text-slate-400 block">Keahlian Utama</span><span className="text-xs font-medium text-slate-700">{prof.skills}</span></div></div></div>))}</div></div>))}</div>
+                </div>
+            );
+
+            const renderStudiLanjut = () => (
+                <div className="max-w-5xl mx-auto animate-fade-in pb-12 space-y-10">
+                    <button onClick={() => handleNavigate('dashboard')} className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 mb-6 transition-all group"><div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm group-hover:border-indigo-200 group-hover:bg-indigo-50"><ArrowLeft size={20} /></div><span className="font-semibold text-sm">Kembali ke Beranda</span></button>
+                    <SectionHeader title="Jalur Studi Lanjut" subtitle="Pahami perbedaan SMA, SMK, dan MA sebelum menentukan pilihan." />
+                    <div className="grid md:grid-cols-3 gap-6">
+                        <div className="bg-white rounded-2xl shadow-sm border-t-4 border-blue-500 overflow-hidden flex flex-col"><div className="p-6 bg-blue-50"><h3 className="text-xl font-bold text-slate-800">SMA</h3><p className="text-sm text-blue-600 font-medium">Sekolah Menengah Atas</p></div><div className="p-6 space-y-4 flex-grow"><ul className="space-y-3 text-sm text-slate-600"><li className="flex gap-2"><CheckCircle size={16} className="text-blue-500 flex-shrink-0"/> Fokus: Teori & Akademik (90%)</li><li className="flex gap-2"><CheckCircle size={16} className="text-blue-500 flex-shrink-0"/> Persiapan Kuliah: Sangat Tinggi</li></ul></div></div>
+                        <div className="bg-white rounded-2xl shadow-sm border-t-4 border-emerald-500 overflow-hidden flex flex-col"><div className="p-6 bg-emerald-50"><h3 className="text-xl font-bold text-slate-800">SMK</h3><p className="text-sm text-emerald-600 font-medium">Sekolah Menengah Kejuruan</p></div><div className="p-6 space-y-4 flex-grow"><ul className="space-y-3 text-sm text-slate-600"><li className="flex gap-2"><CheckCircle size={16} className="text-emerald-500 flex-shrink-0"/> Fokus: Praktik (60%) & Teori (40%)</li><li className="flex gap-2"><CheckCircle size={16} className="text-emerald-500 flex-shrink-0"/> Siap Kerja: Sangat Tinggi (Punya Skill)</li></ul></div></div>
+                        <div className="bg-white rounded-2xl shadow-sm border-t-4 border-amber-500 overflow-hidden flex flex-col"><div className="p-6 bg-amber-50"><h3 className="text-xl font-bold text-slate-800">MA</h3><p className="text-sm text-amber-600 font-medium">Madrasah Aliyah</p></div><div className="p-6 space-y-4 flex-grow"><ul className="space-y-3 text-sm text-slate-600"><li className="flex gap-2"><CheckCircle size={16} className="text-amber-500 flex-shrink-0"/> Fokus: Umum + Agama Islam</li><li className="flex gap-2"><CheckCircle size={16} className="text-amber-500 flex-shrink-0"/> Lingkungan: Religius / Pesantren</li></ul></div></div>
+                    </div>
+                </div>
+            );
+
+            const renderRefleksiDiri = () => (
+                <div className="max-w-3xl mx-auto animate-fade-in space-y-6">
+                    <button onClick={() => handleNavigate('dashboard')} className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 mb-6 transition-all group"><div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm group-hover:border-indigo-200 group-hover:bg-indigo-50"><ArrowLeft size={20} /></div><span className="font-semibold text-sm">Kembali ke Beranda</span></button>
+                    <SectionHeader title="Refleksi Diri" subtitle="Refleksi diri membantu siswa memahami kesiapan dalam menentukan pilihan karier." />
+                    {isReflectionSaved ? (
+                    <div className="bg-white border border-slate-100 rounded-2xl p-6 md:p-10 text-center animate-fade-in shadow-xl"><div className="bg-green-100 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600"><CheckCircle size={40} /></div><h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2">Refleksi Berhasil Disimpan!</h3>
+                    <div className="text-left mt-6 bg-slate-50 p-6 rounded-xl border border-slate-100 space-y-4">
+                        <div>
+                            <h4 className="font-bold text-indigo-700 mb-1">a. Apa minat dan bakat yang saya miliki?</h4>
+                            <p className="text-slate-600 text-sm whitespace-pre-line">{reflectionData.minatBakat || "-"}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-indigo-700 mb-1">b. Karier apa yang menarik bagi saya?</h4>
+                            <p className="text-slate-600 text-sm whitespace-pre-line">{reflectionData.karierImpian || "-"}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-indigo-700 mb-1">c. Pendidikan apa yang perlu saya tempuh untuk mencapai karier tersebut?</h4>
+                            <p className="text-slate-600 text-sm whitespace-pre-line">{reflectionData.rencanaPendidikan || "-"}</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8"><button onClick={() => setIsReflectionSaved(false)} className="px-6 py-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2"><Edit3 size={18} /> Edit Jawaban</button><button onClick={() => handleNavigate('tes-minat')} className="px-8 py-4 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-2">Lanjut ke Tes Peminatan <ArrowRight size={18} /></button></div></div>
+                    ) : (
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden"><div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 text-white"><div className="flex items-center gap-3 mb-2"><MessageSquare className="w-6 h-6 opacity-80" /><h3 className="text-xl font-bold">Lembar Refleksi Karir</h3></div></div>
+                        <div className="p-6 md:p-8 space-y-8">
+                            <div className="space-y-6">
+                                <h4 className="font-bold text-lg text-slate-800 border-b pb-2 mb-4">1. Pertanyaan Refleksi:</h4>
+                                
+                                <div className="space-y-2">
+                                    <label className="font-bold text-slate-700 block">a. Apa minat dan bakat yang saya miliki?</label>
+                                    <textarea className="w-full h-24 p-4 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-2 focus:ring-purple-200 transition-all" placeholder="Tulis jawabanmu di sini..." value={reflectionData.minatBakat} onChange={(e) => setReflectionData({...reflectionData, minatBakat: e.target.value})}></textarea>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="font-bold text-slate-700 block">b. Karier apa yang menarik bagi saya?</label>
+                                    <textarea className="w-full h-24 p-4 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-2 focus:ring-purple-200 transition-all" placeholder="Contoh: Dokter, Guru, Pengusaha, dll..." value={reflectionData.karierImpian} onChange={(e) => setReflectionData({...reflectionData, karierImpian: e.target.value})}></textarea>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="font-bold text-slate-700 block">c. Pendidikan apa yang perlu saya tempuh untuk mencapai karier tersebut?</label>
+                                    <textarea className="w-full h-24 p-4 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-2 focus:ring-purple-200 transition-all" placeholder="Contoh: Kuliah Jurusan Kedokteran, SMK Jurusan Akuntansi, dll..." value={reflectionData.rencanaPendidikan} onChange={(e) => setReflectionData({...reflectionData, rencanaPendidikan: e.target.value})}></textarea>
+                                </div>
+                            </div>
+                            
+                            <div className="pt-6 border-t border-slate-100 flex justify-end">
+                                <button onClick={() => setIsReflectionSaved(true)} className="bg-purple-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-purple-700 transition-all flex items-center gap-2"><CheckCircle size={20} /> Simpan Refleksi</button>
+                            </div>
+                        </div>
+                    </div>
+                    )}
+                </div>
+            );
+
+            // --- RENDER TES MINAT ---
+            const renderTesMinat = () => {
+                if (quizState === 'intro') {
+                    return (
+                        <div className="max-w-2xl mx-auto animate-fade-in text-center py-10">
+                            <button onClick={() => handleNavigate('dashboard')} className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 mb-6 transition-all group mx-auto md:mx-0"><div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm group-hover:border-indigo-200 group-hover:bg-indigo-50"><ArrowLeft size={20} /></div><span className="font-semibold text-sm">Kembali ke Beranda</span></button>
+                            <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100 relative overflow-hidden"><div className="mb-6 inline-block p-4 rounded-full bg-purple-50 text-purple-600"><Target size={40} /></div><h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-4">Tes Arah Peminatan Siswa</h2><p className="text-slate-600 mb-8 leading-relaxed text-sm md:text-base">Tes ini menggunakan 80 soal untuk menganalisis kecenderungan minat dan kesiapan Anda.</p><button onClick={goToInputName} className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-indigo-500/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"><Activity size={20} /> Mulai Tes</button></div>
+                        </div>
+                    );
+                }
+                if (quizState === 'inputName') {
+                    return (
+                        <div className="max-w-xl mx-auto animate-fade-in py-10">
+                             <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
+                                <h2 className="text-2xl font-bold text-slate-800 text-center mb-6">Identitas Siswa</h2>
+                                <form onSubmit={startQuiz} className="space-y-6">
+                                    <div><label className="block text-sm font-bold text-slate-700 mb-2">Nama Lengkap</label><input type="text" required value={studentData.name} onChange={(e) => setStudentData({...studentData, name: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none" placeholder="Contoh: Budi Santoso" /></div>
+                                    <div><label className="block text-sm font-bold text-slate-700 mb-2">Kelas</label><input type="text" required value={studentData.className} onChange={(e) => setStudentData({...studentData, className: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none" placeholder="Contoh: IX A" /></div>
+                                    <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:bg-indigo-700 flex items-center justify-center gap-2">Lanjut Mengerjakan <ArrowRight size={18} /></button>
+                                </form>
+                            </div>
+                        </div>
+                    )
+                }
+                if (quizState === 'playing') {
+                    const question = questions[currentQuestionIdx];
+                    const progress = ((currentQuestionIdx + 1) / questions.length) * 100;
+                    return (
+                        <div className="max-w-2xl mx-auto animate-fade-in py-10">
+                            <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+                                <div className="h-2 w-full bg-slate-100"><div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }}></div></div>
+                                <div className="p-6 md:p-12">
+                                    <div className="flex justify-between items-center mb-6"><span className="text-[10px] md:text-xs font-bold text-indigo-500 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">{question.type}</span><span className="text-xs font-bold text-slate-400">{currentQuestionIdx + 1}/{questions.length}</span></div>
+                                    <h3 className="text-lg md:text-2xl font-bold text-slate-800 mb-10 leading-snug min-h-[80px]">"{question.text}"</h3>
+                                    <div className="grid grid-cols-1 gap-3">{[4, 3, 2, 1].map((score) => { const labels = { 4: "Sangat Setuju", 3: "Setuju", 2: "Tidak Setuju", 1: "Sangat Tidak Setuju" }; return <button key={score} onClick={() => handleAnswer(score)} className={`w-full py-3 px-4 rounded-xl border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 text-slate-700 font-bold text-left transition-all flex justify-between group text-sm md:text-base`}><span>{labels[score]}</span></button> })}</div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+                if (quizState === 'result' && quizResult) {
+                    const interestResults = quizResult.filter(r => r.type !== 'KESIAPAN');
+                    const sortedInterests = [...interestResults].sort((a, b) => b.percentage - a.percentage);
+                    const topInterest = sortedInterests[0];
+                    const readiness = quizResult.find(r => r.type === 'KESIAPAN') || { percentage: 0, interpretation: { text: "Belum Ada Data" } };
+                    
+                    return (
+                        <div className="max-w-4xl mx-auto animate-fade-in py-6 space-y-6">
+                            <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-xl text-center font-bold">Data Hasil Tes telah berhasil disimpan ke Database Guru BK!</div>
+                            <div className="bg-white p-4 rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                                <div className="overflow-x-auto scrollbar-hide">
+                                    {/* PDF PREVIEW CONTAINER - MATCHING THE UPLOADED PDF EXACTLY */}
+                                    <div ref={resultRef} className="bg-white text-slate-900 font-sans p-12 mx-auto" style={{ width: '210mm', minWidth: '700px', minHeight: '330mm' }}>
+                                        
+                                        {/* HEADER - CENTERED */}
+                                        <div className="text-center mb-8">
+                                            <h2 className="text-lg font-bold uppercase tracking-wide text-slate-700 mb-1">LAPORAN HASIL ANALISIS PEMINATAN</h2>
+                                            <h1 className="text-2xl font-extrabold text-slate-900 mb-1">SMP PGRI 1 CIKADU</h1>
+                                            <p className="text-sm font-medium text-slate-600">Layanan Bimbingan Konseling - Karir & Studi Lanjut</p>
+                                            <div className="border-b-2 border-slate-800 mt-4 mx-auto w-full"></div>
+                                        </div>
+
+                                        {/* STUDENT INFO - LEFT ALIGNED */}
+                                        <div className="mb-8 pl-2">
+                                            <table className="w-full text-sm">
+                                                <tbody>
+                                                    <tr>
+                                                        <td className="w-32 py-1 font-bold">Nama Siswa</td>
+                                                        <td className="w-4 text-center">:</td>
+                                                        <td className="font-medium">{studentData.name}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="w-32 py-1 font-bold">Kelas</td>
+                                                        <td className="w-4 text-center">:</td>
+                                                        <td className="font-medium">{studentData.className}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="w-32 py-1 font-bold">Tanggal Tes</td>
+                                                        <td className="w-4 text-center">:</td>
+                                                        <td className="font-medium">{new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* RECOMMENDATION BOX */}
+                                        <div className="mb-8">
+                                            <h3 className="text-sm font-bold uppercase mb-2 pl-2 border-l-4 border-indigo-600">REKOMENDASI PEMINATAN</h3>
+                                            <div className="border border-slate-300 rounded-lg p-6 text-center bg-slate-50">
+                                                <div className="text-3xl font-extrabold text-slate-800 tracking-wide mb-2">{topInterest.type}</div>
+                                                <p className="text-sm text-slate-600">Minat dominan pada bidang {topInterest.type}.</p>
+                                            </div>
+                                        </div>
+
+                                        {/* ANALYSIS TABLE */}
+                                        <div className="mb-8">
+                                            <h3 className="text-sm font-bold uppercase mb-2 pl-2 border-l-4 border-indigo-600">RINCIAN HASIL ANALISIS</h3>
+                                            <table className="w-full border-collapse border border-slate-300 text-sm">
+                                                <thead className="bg-slate-100">
+                                                    <tr>
+                                                        <th className="border border-slate-300 p-3 text-left">Aspek</th>
+                                                        <th className="border border-slate-300 p-3 text-center">Skor (%)</th>
+                                                        <th className="border border-slate-300 p-3 text-left">Kategori</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {interestResults.map((res) => (
+                                                        <tr key={res.type}>
+                                                            <td className="border border-slate-300 p-3 font-medium">{res.type}</td>
+                                                            <td className="border border-slate-300 p-3 text-center font-bold">{res.percentage}%</td>
+                                                            <td className="border border-slate-300 p-3">{res.interpretation.text.split('/')[0]}</td>
+                                                        </tr>
+                                                    ))}
+                                                    <tr className="bg-slate-50 font-semibold">
+                                                        <td className="border border-slate-300 p-3">Kesiapan</td>
+                                                        <td className="border border-slate-300 p-3 text-center">{readiness.percentage}%</td>
+                                                        <td className="border border-slate-300 p-3">{readiness.interpretation.text}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* REFLECTION NOTES (ADDED) */}
+                                        <div className="mb-10">
+                                            <h3 className="text-sm font-bold uppercase mb-4 pl-2 border-l-4 border-indigo-600">CATATAN REFLEKSI DIRI</h3>
+                                            <div className="space-y-4 text-sm pl-2">
+                                                <div>
+                                                    <p className="font-bold mb-1">1. Minat & Bakat:</p>
+                                                    <p className="text-slate-700 italic pl-4 border-l-2 border-slate-200">"{reflectionData.minatBakat || '(Belum diisi)'}"</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold mb-1">2. Karier Impian:</p>
+                                                    <p className="text-slate-700 italic pl-4 border-l-2 border-slate-200">"{reflectionData.karierImpian || '(Belum diisi)'}"</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold mb-1">3. Rencana Pendidikan:</p>
+                                                    <p className="text-slate-700 italic pl-4 border-l-2 border-slate-200">"{reflectionData.rencanaPendidikan || '(Belum diisi)'}"</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* FOOTER & SIGNATURES */}
+                                        <div className="text-xs text-slate-500 mb-8 italic">
+                                            Catatan: Hasil ini merupakan indikator awal. Keputusan akhir sebaiknya didiskusikan dengan orang tua dan Guru BK.
+                                        </div>
+
+                                        <div className="flex justify-between text-sm mt-8 px-4">
+                                            <div className="text-center">
+                                                <p className="mb-20 font-medium">Mengetahui,<br/>Guru Bimbingan Konseling</p>
+                                                <p className="font-bold text-base border-b border-slate-800 pb-1 mb-1 inline-block min-w-[150px]">{config.guruName}</p>
+                                                <p>NIP. {config.guruNip}</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="mb-20 font-medium">Cikadu, {new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}<br/>Siswa</p>
+                                                <p className="font-bold text-base border-b border-slate-800 pb-1 mb-1 inline-block min-w-[150px]">{studentData.name}</p>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 justify-center"><button onClick={() => { setQuizState('intro'); setStudentData({name: '', className: ''}); }} className="px-4 py-3 rounded-xl border border-indigo-200 text-indigo-700 font-bold hover:bg-indigo-100 text-sm">Tes Ulang</button><button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="px-6 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-lg flex items-center justify-center gap-2 disabled:bg-slate-400 text-sm">{isGeneratingPDF ? 'Memproses...' : <><Download size={18} /> Download PDF</>}</button></div>
+                        </div>
+                    );
+                }
+                return null;
+            };
+
+            const renderProfilGuru = () => (
+                <div className="max-w-3xl mx-auto animate-fade-in space-y-8">
+                    <button onClick={() => handleNavigate('dashboard')} className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 mb-6 transition-all group"><div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm group-hover:border-indigo-200 group-hover:bg-indigo-50"><ArrowLeft size={20} /></div><span className="font-semibold text-sm">Kembali ke Beranda</span></button>
+                    <SectionHeader title="Profil Guru BK" subtitle="Mengenal lebih dekat pembimbing masa depanmu." />
+                    <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100"><div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-600 relative"><div className="absolute -bottom-16 left-8 p-1 bg-white rounded-full"><div className="w-32 h-32 bg-slate-200 rounded-full flex items-center justify-center text-slate-400 border-4 border-white shadow-md overflow-hidden bg-white">{config.guruUrl ? <img src={config.guruUrl} alt="Foto Guru" className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <User size={64} />}</div></div></div><div className="pt-20 px-8 pb-8"><h2 className="text-3xl font-bold text-slate-800">{config.guruName}</h2><p className="text-indigo-600 font-medium text-lg">Guru Bimbingan dan Konseling</p><div className="mt-6 grid gap-4"><div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100"><div className="bg-indigo-100 p-2 rounded-lg text-indigo-600"><School size={20} /></div><div><p className="text-xs text-slate-500 uppercase tracking-wide font-bold">Unit Kerja</p><p className="font-medium text-slate-700">SMP PGRI 1 Cikadu</p></div></div><div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100"><div className="bg-green-100 p-2 rounded-lg text-green-600"><Phone size={20} /></div><div><p className="text-xs text-slate-500 uppercase tracking-wide font-bold">Kontak WhatsApp</p><p className="font-medium text-slate-700">082310451381</p></div></div></div></div></div>
+                </div>
+            );
+
+            // MAIN CONTENT SWITCH
+            const renderContent = () => {
+                switch(activeTab) {
+                    case 'dashboard': return renderDashboard();
+                    case 'admin-login': return renderAdminLogin();
+                    case 'admin-dashboard': return user ? renderAdminDashboard() : renderAdminLogin();
+                    case 'mengenal-diri': return renderMengenalDiri();
+                    case 'info-karir': return renderInfoKarir();
+                    case 'studi-lanjut': return renderStudiLanjut();
+                    case 'refleksi-diri': return renderRefleksiDiri();
+                    case 'tes-minat': return renderTesMinat();
+                    case 'profil-guru': return renderProfilGuru();
+                    default: return renderDashboard();
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex selection:bg-indigo-100 selection:text-indigo-700 relative">
+                    <div className={`fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity md:hidden ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsMenuOpen(false)}></div>
+                    <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white/80 backdrop-blur-xl border-r border-slate-200 transform transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+                        <div className="h-20 flex items-center justify-between px-6 border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                {config.logoUrl ? 
+                                    <img src={config.logoUrl} alt="Logo Sekolah" className="h-10 w-auto object-contain" referrerPolicy="no-referrer" /> : 
+                                    <div className="bg-indigo-600 p-2 rounded-lg text-white"><Compass size={24} /></div>
+                                }
+                                <div><h1 className="font-bold text-lg text-slate-800">Ruang BK</h1><p className="text-xs text-slate-500">SMP PGRI 1 Cikadu</p></div>
+                            </div>
+                            <button onClick={() => setIsMenuOpen(false)} className="md:hidden text-slate-400 hover:text-slate-600"><X size={24} /></button>
+                        </div>
+                        <nav className="p-4 space-y-1">
+                            <div className="text-xs font-semibold text-slate-400 px-4 mb-2 mt-4 uppercase tracking-wider">Menu Utama</div>
+                            {[
+                                { id: 'dashboard', label: 'Beranda', icon: <LayoutDashboard size={20} /> },
+                                { id: 'mengenal-diri', label: 'Mengenal Diri', icon: <User size={20} /> },
+                                { id: 'info-karir', label: 'Info Karir', icon: <Briefcase size={20} /> },
+                                { id: 'studi-lanjut', label: 'Studi Lanjut', icon: <GraduationCap size={20} /> },
+                                { id: 'refleksi-diri', label: 'Refleksi Diri', icon: <MessageSquare size={20} /> }, 
+                                { id: 'tes-minat', label: 'Tes Peminatan', icon: <CheckSquare size={20} /> },
+                                { id: 'profil-guru', label: 'Profil Guru BK', icon: <UserCheck size={20} /> }, 
+                            ].map((item) => (
+                                <button key={item.id} onClick={() => handleNavigate(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-medium ${activeTab === item.id ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                                    <div className={`${activeTab === item.id ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>{item.icon}</div>
+                                    {item.label}
+                                </button>
+                            ))}
+                            
+                            <div className="pt-4 border-t border-slate-100 mt-4">
+                                <button onClick={() => handleNavigate('admin-login')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-medium ${activeTab.includes('admin') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+                                    <Lock size={20} />
+                                    {user ? 'Dashboard Guru' : 'Login Guru'}
+                                </button>
+                            </div>
+                        </nav>
+                    </aside>
+                    <main className="flex-1 md:ml-72 min-h-screen flex flex-col transition-all duration-300">
+                        <header className="md:hidden bg-white/80 backdrop-blur-md sticky top-0 z-40 px-4 h-16 flex items-center justify-between border-b border-slate-200">
+                            <div className="font-bold text-slate-800 flex items-center gap-2">
+                                {config.logoUrl ? 
+                                    <img src={config.logoUrl} alt="Logo" className="h-8 w-auto" referrerPolicy="no-referrer" /> : 
+                                    <div className="bg-indigo-600 p-1.5 rounded-lg text-white"><Compass size={16} /></div>
+                                }
+                                <span>Ruang BK</span>
+                            </div>
+                            <button onClick={() => setIsMenuOpen(true)} className="p-2 text-slate-600 bg-slate-100 rounded-lg"><Menu size={20} /></button>
+                        </header>
+                        <div className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full overflow-x-hidden">
+                            {renderContent()}
+                        </div>
+                        <footer className="py-8 text-center text-slate-400 text-sm border-t border-slate-200 bg-white md:bg-transparent mt-auto"><p>© {new Date().getFullYear()} Bimbingan Konseling - SMP PGRI 1 Cikadu</p><p className="text-xs mt-1">Dibuat untuk membantu siswa meraih masa depan gemilang.</p></footer>
+                    </main>
+                    {activeTab !== 'dashboard' && <button onClick={() => handleNavigate('dashboard')} className="fixed bottom-6 right-6 z-50 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-2 transition-all hover:scale-105 font-bold animate-fade-in border-2 border-white/20"><LayoutDashboard size={20} /><span className="hidden sm:inline">Kembali ke Beranda</span></button>}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
